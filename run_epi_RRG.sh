@@ -13,14 +13,14 @@ p_edge=1
 nsrc=1
 
 
-path_dir="$(pwd)/results/${type_graph}"
+path_dir="$(pwd)/results/epijl/${type_graph}_${nsrc}src/1rnd/"
 
 p_source=1e-2
 
 
 
 
-SCRIPT="-u testbench/run_epi.py"
+SCRIPT=" testbench/run_epi.py"
 
 pr_sympt=0.5
 #n_test_rnd=3
@@ -33,27 +33,25 @@ init_name="exp_"
 GEN_GRAPH="--type_graph $type_graph -N $N -d $d --height $height -T $t_limit --lambda $lambda --mu $mu --p_edge $p_edge --n_sources $nsrc"
 
 EXTRA_FLAGS=" --init_name_file $init_name --path_dir $path_dir "
-SPARSE_OBS="--sparse_obs --sparse_rnd_tests $n_test_rnd --pr_sympt $pr_sympt --delay_test_p $delay_test_p --sparse_obs_last"
+SPARSE_OBS="--sparse_obs --sparse_rnd_tests $n_test_rnd --pr_sympt $pr_sympt --delay_test_p $delay_test_p"
 
-EPIFL="--p_source $p_source --max_iter 1000 --eps_conv 1e-10"
+EPIFL="--p_source $p_source --max_iter 1000 --eps_conv 1e-10 --seeds_range 0 101"
 
-num_conf=10
-st_conf=8
-
-echo "NUM SAMPLES $num_samples"
+num_conf=1
+st_conf=0
 
 seed_st=0
-nseed=1
+nseed=2
 seed_end=$(( $seed_st + $nseed - 1 ))
 
 
 mkdir -p $path_dir
-for seed in $(seq $seed_st $seed_end)
+for seed in 1 #$(seq $seed_st $seed_end)
 do
     #if [ $seed -eq 45 ]; then
     #    continue
     #fi
     echo $seed
     #n_conf=$(( $st_conf+$num_conf ))
-    python $SCRIPT $GEN_GRAPH --seed $seed $EXTRA_FLAGS $SPARSE_OBS $EPIFL --start_conf $st_conf --num_conf $num_conf
+    python -u $SCRIPT $GEN_GRAPH --seed $seed $EXTRA_FLAGS $SPARSE_OBS $EPIFL --start_conf $st_conf --num_conf $num_conf
 done
