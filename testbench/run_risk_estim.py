@@ -123,6 +123,8 @@ if __name__ == "__main__":
 
     #+1 t_limit times || +1 obs after contacts || +1 for susceptible
     contacts = data_["contacts"]
+    #np.savez_compressed(name_file+"_contacts.npz", contacts=contacts)
+
     N = int(max(contacts[:, 1]) + 1)
     contacts_df = prepare_contacts(contacts)
     #print(contacts_df)

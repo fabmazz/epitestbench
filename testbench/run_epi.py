@@ -50,6 +50,8 @@ def run_epi_(args):
     assert np.max(contacts[:,0:2]) <= epInstance.n
     assert np.max(contacts[:,2]) <= epInstance.t_limit
 
+    #np.savez_compressed(name_file+"_contacts.npz", contacts_py)
+
     cts_EPI = runner.adapt_contacts(contacts)
 
     start_i = args.start_conf
@@ -95,6 +97,7 @@ def run_epi_(args):
         print("Took {} sec".format(t_taken))
 
         all_args = vars(args)
+        all_args["time_convergence"] = t_taken
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
 
