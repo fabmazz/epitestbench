@@ -28,6 +28,8 @@ def add_arg_parser(parser):
     parser.add_argument('--p_sus', type=float, default=0.5, dest="p_sus", help="P sus used by sib")
     parser.add_argument('--sib_maxit', type=int, default=1000, help="Max iterations of sib")
    
+    parser.add_argument("--nthreads", type=int, default=-1, dest="num_threads",
+        help="Number of threads to run sib with")
 
     return parser
 
@@ -98,11 +100,14 @@ if __name__ == "__main__":
         p_sus = args.p_sus
 
         if p_source < 0:
-            p_source = 1/N
+            p_source = 1/INSTANCE.n
 
         prob_seed = p_source / (2 - p_source)
         mu_rate = -np.log(1-INSTANCE.mu)
         sib = sib_rank.sib
+        if args.num_threads > 0:
+            ## set number of cores to use with sib
+            sib.set_num_threads(args.num_threads)
 
         params_sib = sib.Params(prob_r = sib.Exponential(mu=mu_rate), 
                                     prob_i = sib.Uniform(p=1.),
