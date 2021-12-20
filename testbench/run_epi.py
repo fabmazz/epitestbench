@@ -1,5 +1,6 @@
 import json, sys, os
 import numpy as np
+import pandas as pd
 from pathlib import Path
 import time
 '''
@@ -50,9 +51,12 @@ def run_epi_(args):
     assert np.max(contacts[:,0:2]) <= epInstance.n
     assert np.max(contacts[:,2]) <= epInstance.t_limit
 
+    #print("Min t", contacts[:,2].min())
+
     #np.savez_compressed(name_file+"_contacts.npz", contacts_py)
 
     cts_EPI = runner.adapt_contacts(contacts)
+    print("cts_EPI", cts_EPI.keys())
 
     start_i = args.start_conf
     t_limit = epInstance.t_limit
@@ -88,9 +92,21 @@ def run_epi_(args):
         else:
             observ_mat = []
         t0 = time.time()
-        nodes = runner.iface().run_mp_trajectories(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
-            obs=observ_mat, epsconv=args.eps_conv,
-            printout=True,maxiter=args.max_iter, damp=0., verbose=args.verbose)
+        try:
+            nodes = runner.iface().run_mp_trajectories(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
+                obs=observ_mat, epsconv=args.eps_conv,
+                printout=True,maxiter=args.max_iter, damp=0., verbose=args.verbose)
+        except RuntimeError as e:
+            def myf(dat, t):
+                df = pd.DataFrame(runner.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
+                df["t"] = t
+                return df
+            cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
+            cts_out_c = pd.concat(cts_out, ignore_index=True)
+            cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
+            print("RUNTIME ERROR, saving contacts: ", cts_out_c)
+            print("Saved at ", name_file_instance+"_contacts.csv")
+            raise e
 
         margins = np.stack([n.marg for n in nodes])
         t_taken = time.time() -t0

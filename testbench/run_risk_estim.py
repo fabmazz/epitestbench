@@ -37,6 +37,7 @@ def prepare_contacts(conts):
     t_limit = int(conts[:,0].max())+1
     conts_df = pd.DataFrame(conts[:,:3].astype(int), columns=["t","i","j"], dtype=int)
     conts_df["lam"]=conts[:,3]
+    ## add fake contact for the last time
     r1 = conts_df.iloc[1].to_dict()
     r1["t"] = t_limit
     r1["lam"] = 0.
@@ -176,10 +177,12 @@ if __name__ == "__main__":
             if len(daily_c) == 0:
                 print("Zero contacts")
                 daily_c = [(dummy_c_last[0], dummy_c_last[1], t, 0.)]
-            #else: print(daily_c[0])
+            #else: #print(daily_c[:2])
             r = ranker.rank(t,daily_contacts=daily_c, daily_obs=tuple(obs_day), data=data)
             #ranks.append()
             #print(type(r), r[0])
+            if "<I>" in data.keys():
+                print("I: ",data["<I>"][t])
             res = np.array([tuple(x) for x in r], dtype=[("idx","i8"),("risk","f8")])
 
         res.sort(axis=0, order="idx")

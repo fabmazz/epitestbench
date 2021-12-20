@@ -200,6 +200,6 @@ if __name__ == "__main__":
             for n in MM:
                 M[n,t] = MM[n]
         np.savez_compressed(name_file_instance+"_sib_margs.npz", marginals=M)
-        pd.DataFrame(data={"lambda":lambdas, "mu":mus}).to_csv(name_file_instance+"_params.gz")
+        #pd.DataFrame(data={"lambda":lambdas, "mu":mus}).to_csv(name_file_instance+"_params.gz")
 
     print("\nSib convergence: \n", pd.Series(convergence_all, index=range(args.start_conf, args.num_conf)))
