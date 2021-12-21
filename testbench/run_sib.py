@@ -93,7 +93,7 @@ if __name__ == "__main__":
         lambda_ = args.lambda_init_param
         mu = args.mu_init_param
         
-    t_limit = args.t_limit
+    t_limit = INSTANCE.t_limit
     mu_rate = -np.log(1-mu)
     learn = args.lr_param > 0
     lambdas=[]

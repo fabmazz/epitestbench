@@ -136,7 +136,7 @@ if __name__ == "__main__":
     #print(contacts_df)
     print(contacts_df.i.dtype)
         
-    t_limit = args.t_limit
+    t_limit = INSTANCE.t_limit
     
     
     for instance_num in range(args.start_conf, args.num_conf):
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
         ranker.init(INSTANCE.n, INSTANCE.t_limit+1)
         dummy_c_last = contacts_df.iloc[-1:].to_records(index=False)[0]
-        for t in range(0,t_limit+1):
+        for t in range(0,INSTANCE.t_limit+1):
             print(f"{t}",end="  ")
             obs_day = obser[obser.time == t]
             obs_day = obs_day.to_records(index=False)
