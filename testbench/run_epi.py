@@ -31,7 +31,6 @@ def add_arguments(parser):
     return parser
 
 
-
 def run_epi_(args):
 
     print(args)
@@ -93,7 +92,7 @@ def run_epi_(args):
             observ_mat = []
         t0 = time.time()
         try:
-            nodes = runner.iface().run_mp_trajectories(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
+            nodes = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
                 obs=observ_mat, epsconv=args.eps_conv,
                 printout=True,maxiter=args.max_iter, damp=0., verbose=args.verbose)
         except RuntimeError as e:
@@ -104,7 +103,7 @@ def run_epi_(args):
             cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
             cts_out_c = pd.concat(cts_out, ignore_index=True)
             cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
-            print("RUNTIME ERROR, saving contacts: ", cts_out_c)
+            print("RUNTIME ERROR, saving contacts: ")
             print("Saved at ", name_file_instance+"_contacts.csv")
             raise e
 
