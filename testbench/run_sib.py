@@ -62,6 +62,8 @@ if __name__ == "__main__":
 
     prob_seed = p_source / (2 - p_source)
     p_sus = p_sus * (1-prob_seed)
+
+    print(sib.version())
 ## ************ GENERATE EPIDEMIES ************
 
     data_, name_file, INSTANCE = create_data(args)
