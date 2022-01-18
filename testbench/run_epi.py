@@ -21,6 +21,7 @@ from pyepi import epi_runner as runner
 def add_arguments(parser):
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
     parser.add_argument("--max_iter", type=int, default=100, help="maximum number of iterations")
+    #parser.add_argument("--max_iter", type=int, default=100, help="maximum number of iterations")
 
     parser.add_argument("--eps_conv", type=float, default=1e-6, help="ɛ to convergence")
 
@@ -65,6 +66,8 @@ def run_epi_(args):
         print("Real source:",np.where(real_src)[0])
 
         name_file_instance = name_file + "_" + str(inst_i)
+        all_args = vars(args)
+        all_args["convergence"] = []
 
         if not args.sparse_obs:
             obs_list = []
@@ -92,9 +95,16 @@ def run_epi_(args):
             observ_mat = []
         t0 = time.time()
         try:
-            nodes = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
+            nodes, epsi = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
                 obs=observ_mat, epsconv=args.eps_conv,
                 printout=True,maxiter=args.max_iter, damp=0., verbose=args.verbose)
+            all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
+            if epsi > args.eps_conv:
+                print(f"Not converged yet, eps: {epsi}")
+                nodes, epsi = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
+                    obs=observ_mat, epsconv=args.eps_conv,
+                    printout=True,maxiter=args.max_iter, damp=0.2, verbose=args.verbose, nodes=nodes)
+                all_args["convergence"].append({"damp":0.2, "eps_final":epsi,"maxiter":args.max_iter})
         except RuntimeError as e:
             def myf(dat, t):
                 df = pd.DataFrame(runner.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
@@ -111,7 +121,7 @@ def run_epi_(args):
         t_taken = time.time() -t0
         print("Took {} sec".format(t_taken))
 
-        all_args = vars(args)
+        
         all_args["time_convergence"] = t_taken
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
