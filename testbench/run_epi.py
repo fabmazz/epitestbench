@@ -66,7 +66,7 @@ def run_epi_(args):
         print("Real source:",np.where(real_src)[0])
 
         name_file_instance = name_file + "_" + str(inst_i)
-        all_args = vars(args)
+        all_args = dict(vars(args))
         all_args["convergence"] = []
 
         if not args.sparse_obs:
@@ -97,7 +97,9 @@ def run_epi_(args):
         try:
             nodes, epsi = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
                 obs=observ_mat, epsconv=args.eps_conv,
-                printout=True,maxiter=args.max_iter, damp=0., verbose=args.verbose)
+                printout=True,maxiter=args.max_iter, damp=0., 
+                verbose=args.verbose,
+                shuffle_every=30)
             all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
             if epsi > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")
@@ -105,6 +107,8 @@ def run_epi_(args):
                     obs=observ_mat, epsconv=args.eps_conv,
                     printout=True,maxiter=args.max_iter, damp=0.2, verbose=args.verbose, nodes=nodes)
                 all_args["convergence"].append({"damp":0.2, "eps_final":epsi,"maxiter":args.max_iter})
+                if epsi > args.eps_conv:
+                    print(f"Not converged by the end. eps: {epsi}")
         except RuntimeError as e:
             def myf(dat, t):
                 df = pd.DataFrame(runner.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
