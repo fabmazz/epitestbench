@@ -16,7 +16,7 @@ from julia.api import Julia
 jl = Julia(compiled_modules=False)
 from lib.make_parser import create_parser, create_data
 
-from pyepi import epi_runner as runner
+from pyepi import epi_runner as epi_run
 
 def add_arguments(parser):
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
@@ -55,11 +55,12 @@ def run_epi_(args):
 
     #np.savez_compressed(name_file+"_contacts.npz", contacts_py)
 
-    cts_EPI = runner.adapt_contacts(contacts)
+    cts_EPI = epi_run.adapt_contacts(contacts)
     print("cts_EPI", cts_EPI.keys())
 
     start_i = args.start_conf
     t_limit = epInstance.t_limit
+    mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI)
     for inst_i in range(start_i, start_i+args.num_conf):
         print(f"Instance {inst_i}")
         real_src = data_["test"][inst_i][0]
@@ -93,25 +94,31 @@ def run_epi_(args):
             assert np.max(observ_mat[:,0]) <= epInstance.n
         else:
             observ_mat = []
+        
+        mRunner.clear_o()
+        mRunner.set_obs(observ_mat)
+        
         t0 = time.time()
+        print("nodes check:",mRunner.nodes())
         try:
-            nodes, epsi = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
-                obs=observ_mat, epsconv=args.eps_conv,
-                printout=True,maxiter=args.max_iter, damp=0., 
+            epsi = mRunner.iterate(eps=args.eps_conv,
+                maxiter=args.max_iter, damp=0., 
                 verbose=args.verbose,
                 shuffle_every=30)
             all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
             if epsi > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")
-                nodes, epsi = runner.iface().run_mp_redo(epInstance.n, epInstance.t_limit, cts_EPI, prob_sources_EPI,
-                    obs=observ_mat, epsconv=args.eps_conv,
-                    printout=True,maxiter=args.max_iter, damp=0.2, verbose=args.verbose, nodes=nodes)
-                all_args["convergence"].append({"damp":0.2, "eps_final":epsi,"maxiter":args.max_iter})
+                
+                epsi = mRunner.iterate(eps=args.eps_conv,
+                        maxiter=args.max_iter, damp=0.3, 
+                        verbose=args.verbose,
+                        shuffle_every=30)
+                all_args["convergence"].append({"damp":0.3, "eps_final":epsi,"maxiter":args.max_iter})
                 if epsi > args.eps_conv:
                     print(f"Not converged by the end. eps: {epsi}")
         except RuntimeError as e:
             def myf(dat, t):
-                df = pd.DataFrame(runner.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
+                df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
                 df["t"] = t
                 return df
             cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
@@ -121,7 +128,7 @@ def run_epi_(args):
             print("Saved at ", name_file_instance+"_contacts.csv")
             raise e
 
-        margins = np.stack([n.marg for n in nodes])
+        margins = np.stack([n.marg for n in mRunner.nodes()])
         t_taken = time.time() -t0
         print("Took {} sec".format(t_taken))
 
