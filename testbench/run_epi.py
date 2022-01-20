@@ -1,8 +1,10 @@
+#from julia import Main
 import json, sys, os
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import time
+
 '''
 def module_path():
     #encoding = sys.getfilesystemencoding()
@@ -100,33 +102,46 @@ def run_epi_(args):
         
         t0 = time.time()
         print("nodes check:",mRunner.nodes())
-        try:
-            epsi = mRunner.iterate(eps=args.eps_conv,
-                maxiter=args.max_iter, damp=0., 
-                verbose=args.verbose,
-                shuffle_every=30)
-            all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
+        epsi = 1000*args.eps_conv
+        damping = [(l, v) for l,v in zip([args.max_iter]*3,[0., 0.3, 0.6])]
+        for maxit, damp in damping:
+            try:
+                epsi = mRunner.iterate(eps=args.eps_conv,
+                        maxiter=maxit, damp=damp, 
+                        verbose=args.verbose,
+                        shuffle_every=30)
+            except RuntimeError as e:
+                print(e)
+                print("ERROR CONVERGING, trying more shuffling and damping")
+                try:
+                    epsi = mRunner.iterate(eps=args.eps_conv,
+                        maxiter=maxit, damp=damp+0.1, 
+                        verbose=args.verbose,
+                        shuffle_every=10)
+                except RuntimeError as ee:
+                    def myf(dat, t):
+                        df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
+                        df["t"] = t
+                        return df
+                    cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
+                    cts_out_c = pd.concat(cts_out, ignore_index=True)
+                    cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
+                    print("RUNTIME ERROR, saving contacts: ")
+                    print("Saved at ", name_file_instance+"_contacts.csv")
+                    raise ee
+            #all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
             if epsi > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")
-                
-                epsi = mRunner.iterate(eps=args.eps_conv,
+            else:
+                break
+                """epsi = mRunner.iterate(eps=args.eps_conv,
                         maxiter=args.max_iter, damp=0.3, 
                         verbose=args.verbose,
                         shuffle_every=30)
-                all_args["convergence"].append({"damp":0.3, "eps_final":epsi,"maxiter":args.max_iter})
-                if epsi > args.eps_conv:
-                    print(f"Not converged by the end. eps: {epsi}")
-        except RuntimeError as e:
-            def myf(dat, t):
-                df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
-                df["t"] = t
-                return df
-            cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
-            cts_out_c = pd.concat(cts_out, ignore_index=True)
-            cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
-            print("RUNTIME ERROR, saving contacts: ")
-            print("Saved at ", name_file_instance+"_contacts.csv")
-            raise e
+                #all_args["convergence"].append({"damp":0.3, "eps_final":epsi,"maxiter":args.max_iter})
+                """
+        if epsi > args.eps_conv:
+            print(f"Not converged by the end. eps: {epsi}")           
 
         margins = np.stack([n.marg for n in mRunner.nodes()])
         t_taken = time.time() -t0
@@ -134,6 +149,7 @@ def run_epi_(args):
 
         
         all_args["time_convergence"] = t_taken
+        all_args["convergence"] = mRunner.history
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
 
