@@ -118,7 +118,7 @@ if __name__ == "__main__":
         else:
             obs_df = data_["observ_df"][instance_num]
             
-            obs_list = obs_df[["node","obs","time",]].to_records(index=False)
+            obs_list = obs_df[["node","obs_st","time",]].to_records(index=False)
             print("NUM OBS: ", len(obs_list))
             print(obs_list)
             obs_init_list =[(i,-1,t) for t in range(t_limit+1) for i in range(N) ]
