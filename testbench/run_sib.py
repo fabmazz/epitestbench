@@ -10,11 +10,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 #path_script = Path(sys.argv[0]).parent.absolute()
 #sys.path.append(os.fspath(path_script.parent/"src"))
 
-from lib.make_parser import create_parser, create_data
+from lib.make_parser import create_parser, create_data, get_versions
 
 try:
     import sib
@@ -98,6 +97,8 @@ if __name__ == "__main__":
     t_limit = INSTANCE.t_limit
     mu_rate = -np.log(1-mu)
     learn = args.lr_param > 0
+    VERSIONS = get_versions()
+    VERSIONS["sib"] = sib.version().split("(")[0].strip()
     lambdas=[]
     mus=[]
     convergence_all=[]
@@ -183,7 +184,8 @@ if __name__ == "__main__":
                 mus.append(float(params_sib.prob_r.mu))
             '''
         all_args = vars(args)
-        all_args["sib_version"] = sib.version()
+        #all_args["sib_version"] = sib.version()
+        all_args["versions"] = VERSIONS
         all_args["sib_convergence"] = conver[0]
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
