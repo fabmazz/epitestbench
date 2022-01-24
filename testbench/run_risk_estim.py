@@ -14,7 +14,7 @@ import pandas as pd
 path_script = Path(sys.argv[0]).parent.absolute()
 sys.path.append(os.fspath(path_script.parent))
 
-from lib.make_parser import create_data, create_parser
+from lib.make_parser import create_data, create_parser, get_versions
 
 
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     print(contacts_df.i.dtype)
         
     t_limit = INSTANCE.t_limit
-    
+    version_scripts = get_versions()
     
     for instance_num in range(args.start_conf, args.num_conf):
         last_obs = data_["test"][instance_num][1]
@@ -156,6 +156,7 @@ if __name__ == "__main__":
             obs_df.to_csv(name_file_instance+"_obs_sparse.csv",index=False)
         
         all_args = vars(args)
+        all_args["versions"] = version_scripts
         with open(name_file_instance+"_args.json","w") as f:
             json.dump(all_args,f, indent=1)
 

@@ -3,7 +3,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from epigen import EpInstance, observ_gen
+from epigen import get_git_revision_hash as epigen_version
 from epigen.epidemy_gen import epidemy_gen_epinstance
+
+from .version import git_version
 
 
 
@@ -188,3 +191,17 @@ def get_base_name_file(args):
     helper function
     """
     return args.str_name_file
+
+def get_versions():
+    version = {}
+    try:
+        version["epigen"] = epigen_version()
+    except FileNotFoundError as e:
+        print("Cannot find version of epigen", e)
+    
+    try:
+        version["epitestbench"] = git_version()
+    except FileNotFoundError as e:
+        print("Cannot find version of epitestbench", e)
+    
+    return version
