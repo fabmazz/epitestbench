@@ -1,4 +1,4 @@
-#from julia import Main
+from julia import Main
 import json, sys, os
 import numpy as np
 import pandas as pd
@@ -14,9 +14,9 @@ def module_path():
 p = Path(module_path()).absolute()
 sys.path.append(str(p)+"/")
 '''
-from julia.api import Julia
-jl = Julia(compiled_modules=False)
-from lib.make_parser import create_parser, create_data
+#from julia.api import Julia
+#jl = Julia(compiled_modules=False)
+from lib.make_parser import create_parser, create_data, get_versions
 
 from pyepi import epi_runner as epi_run
 
@@ -62,6 +62,12 @@ def run_epi_(args):
 
     start_i = args.start_conf
     t_limit = epInstance.t_limit
+    versions = get_versions()
+    try:
+        versions["EPI"] = epi_run.git_rev_hash()
+    except:
+        print("Cannot find EPI version")
+    
     mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI)
     for inst_i in range(start_i, start_i+args.num_conf):
         print(f"Instance {inst_i}")
@@ -70,6 +76,7 @@ def run_epi_(args):
 
         name_file_instance = name_file + "_" + str(inst_i)
         all_args = dict(vars(args))
+        all_args["versions"] = versions
         all_args["convergence"] = []
 
         if not args.sparse_obs:
@@ -117,7 +124,7 @@ def run_epi_(args):
                     epsi = mRunner.iterate(eps=args.eps_conv,
                         maxiter=maxit, damp=damp+0.1, 
                         verbose=args.verbose,
-                        shuffle_every=10)
+                        shuffle_every=15)
                 except RuntimeError as ee:
                     def myf(dat, t):
                         df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
