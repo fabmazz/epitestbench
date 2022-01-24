@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from epigen import EpInstance, observ_gen
 from epigen.epidemy_gen import epidemy_gen_epinstance
 
@@ -46,7 +47,7 @@ def create_parser():
 
     parser.add_argument("--sparse_obs_last", action="store_true",
             help="Only observe the infected, at the last time instant. No random observations are done")
-    parser.add_argument("--sp_obs_min_tinf", type=int, default=-2)
+    parser.add_argument("--sp_obs_min_t", type=int, default=None, help="Minimim time to start the observations")
     
     parser.add_argument("--pr_sympt", type=float, default=0., dest="sp_p_inf_symptoms", 
         help="probability for each infected individual to be symptomatic and get tested")
@@ -54,6 +55,9 @@ def create_parser():
         help="List of probabilities for the time delay in testing symptomatic individuals, starting from 0. Enter one probability after the other, they will get normalized")
     parser.add_argument("--save_data_confs", action="store_true", 
             help="Save data of generated epidemies")
+    ## use the new generator
+    parser.add_argument("--sp_obs_new", action="store_true", 
+            help="Use the new generator for observations")
     
 
 
@@ -108,10 +112,12 @@ def create_data(args):
     if args.sparse_obs:
         ##check args
         print("Generating sparse observations...")
-        ntests = args.sparse_n_test_time
+        nrnd_tests = args.sparse_n_test_time
         pr_sympt = args.sp_p_inf_symptoms
         p_test_delay = args.sp_p_test_delay
-        if (p_test_delay is None and ntests < 0):
+
+        t_obs_lim = args.sp_obs_min_t if args.sp_obs_min_t != None else -1
+        if (p_test_delay is None and nrnd_tests < 0):
             raise ValueError(
                 "In order to run sparse observations you have to put the number of tests and the test delay")
         if p_test_delay is None:
@@ -119,21 +125,38 @@ def create_data(args):
         else:
             p_test_delay = np.array(p_test_delay)/sum(p_test_delay)
         ## get full epidemies
-        if args.sparse_obs_last:
-            obs_df, obs_json = observ_gen.make_sparse_obs_last_t(data_,
-                t_limit, pr_sympt=pr_sympt, seed=seed, verbose=args.verbose_gen,
-                numeric_obs=True
-                )
+        if args.sp_obs_new:
+            if args.sparse_obs_last:
+                nrnd_tests = 0
+                t_obs_lim = t_limit
+
+            g = observ_gen.gen_obs_new_data(data_, mInstance,p_test_delay=p_test_delay,
+                n_test_rnd=nrnd_tests, seed=mInstance.seed,
+                tobs_inf_min=t_obs_lim,
+                tobs_rnd_lim=(t_obs_lim, None),
+                allow_testing_pos=False
+            )
+            obs_df = [pd.DataFrame(x, columns=["node","obs_st","time"]) for x in g]
+            obs_json = None
+            
         else:
-            obs_df, obs_json = observ_gen.make_sparse_obs_default(data_,
-                    t_limit, ntests=ntests, pr_sympt=pr_sympt,
-                    p_test_delay=p_test_delay, seed=seed, verbose=args.verbose_gen,
-                    min_t_inf=args.sp_obs_min_tinf,
-                    numeric_obs=True)
+            #old code
+            if args.sparse_obs_last:
+                obs_df, obs_json = observ_gen.make_sparse_obs_last_t(data_,
+                    t_limit, pr_sympt=pr_sympt, seed=seed, verbose=args.verbose_gen,
+                    numeric_obs=True
+                    )
+            else:
+                obs_df, obs_json = observ_gen.make_sparse_obs_default(data_,
+                        t_limit, ntests=nrnd_tests, pr_sympt=pr_sympt,
+                        p_test_delay=p_test_delay, seed=seed, verbose=args.verbose_gen,
+                        min_t_inf=t_obs_lim,
+                        numeric_obs=True)
         for df in obs_df:
             df["obs_st"] = df["obs"]
         data_["observ_df"] = obs_df
-        data_["observ_dict"] = obs_json
+        if obs_json is not None:
+            data_["observ_dict"] = obs_json
         #print(obs_df[0])
         print("DONE.")
 
