@@ -134,6 +134,7 @@ def create_data(args):
                 t_obs_lim = t_limit
 
             g = observ_gen.gen_obs_new_data(data_, mInstance,p_test_delay=p_test_delay,
+                p_sympt=pr_sympt,
                 n_test_rnd=nrnd_tests, seed=mInstance.seed,
                 tobs_inf_min=t_obs_lim,
                 tobs_rnd_lim=(t_obs_lim, None),
@@ -156,7 +157,8 @@ def create_data(args):
                         min_t_inf=t_obs_lim,
                         numeric_obs=True)
         for df in obs_df:
-            df["obs_st"] = df["obs"]
+            if "obs" in df:
+                df["obs_st"] = df["obs"]
         data_["observ_df"] = obs_df
         if obs_json is not None:
             data_["observ_dict"] = obs_json
