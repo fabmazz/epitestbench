@@ -96,6 +96,7 @@ def run_epi_(args):
         #obs_list = list(obs_list)
         obs_list.sort(key=lambda tup: tup[2])
         ## convert to matrix
+        print("Num obs: ", len(obs_list))
         if len(obs_list) > 0:
             observ_mat = np.array(obs_list).astype(int)
             observ_mat[:,0]+=1
@@ -125,17 +126,23 @@ def run_epi_(args):
                         maxiter=maxit, damp=damp+0.1, 
                         verbose=args.verbose,
                         shuffle_every=15)
-                except RuntimeError as ee:
-                    def myf(dat, t):
-                        df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
-                        df["t"] = t
-                        return df
-                    cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
-                    cts_out_c = pd.concat(cts_out, ignore_index=True)
-                    cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
-                    print("RUNTIME ERROR, saving contacts: ")
-                    print("Saved at ", name_file_instance+"_contacts.csv")
-                    raise ee
+                except RuntimeError:
+                    try:
+                        epsi = mRunner.iterate(eps=args.eps_conv,
+                            maxiter=maxit, damp=min(damp+0.5,0.99), 
+                            verbose=args.verbose,
+                            shuffle_every=15)
+                    except RuntimeError as ee:
+                        def myf(dat, t):
+                            df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])
+                            df["t"] = t
+                            return df
+                        cts_out = [myf(cts_EPI[k], k)  for k in sorted(cts_EPI.keys())]
+                        cts_out_c = pd.concat(cts_out, ignore_index=True)
+                        cts_out_c.to_csv(name_file_instance+"_contacts.csv", index=False)
+                        print("RUNTIME ERROR, saving contacts: ")
+                        print("Saved at ", name_file_instance+"_contacts.csv")
+                        raise ee
             #all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
             if epsi > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")

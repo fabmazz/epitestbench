@@ -40,6 +40,28 @@ def read_margs_inst(fold, inst, prefix="", name_npz="margs", range_confs=(0,1),
         d.close()
     return margs
 
+def read_obs_inst(fold, inst, prefix="", name_csv="obs_sparse", range_confs=(0,1),
+    post_inst="", outprint=True):
+    """
+    Read marginals with instance naming
+    """
+    name = f"{prefix}"+ str(inst)+ post_inst
+    
+    files = []
+    path = Path(fold)
+    if outprint:
+        print(path.resolve().as_posix())
+
+    load_range = _make_range_confs(range_confs)
+
+    if outprint: print(load_range)
+    for i in load_range:
+        nam_f = name + f"_{i}_{name_csv}.csv"
+        d = pd.read_csv(path / nam_f)
+        files.append(d)
+
+    return files
+
 def read_risk_inst(fold, inst, ranker, prefix="", range_confs=(0,1), outprint=True):
     """
     Read marginals with instance naming
