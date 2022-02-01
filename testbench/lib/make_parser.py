@@ -42,6 +42,9 @@ def create_parser():
     parser.add_argument("--unique_numinf",  action="store_true", help="Make epidemies with unique number of final infected and recovered")
     parser.add_argument("--no_ver_gen", action="store_false", dest="verbose_gen", 
             help="Don't be too verbose in the generation of epidemies")
+
+    parser.add_argument("--node_drop_p", type=float, default=0., dest="p_drop_node",
+            help="Probability of dropping a node after generating random graph (only for dynamic graphs)")
     ###Observations args
     parser.add_argument("--sparse_obs", action="store_true", 
             help="Generate and run with sparse observations")

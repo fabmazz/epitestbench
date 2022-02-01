@@ -1,6 +1,14 @@
+import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
+
+def load_json(path):
+    """
+    Load json file
+    """
+    with open(path) as f:
+        return json.load(f)
 
 def _make_range_confs(in_range):
     if isinstance(in_range, range):
@@ -84,3 +92,24 @@ def read_risk_inst(fold, inst, ranker, prefix="", range_confs=(0,1), outprint=Tr
         ranking.append(ser)
         d.close()
     return ranking
+
+
+def read_params_inst(fold, inst, prefix="", name_pars="args", range_confs=(0,1),algo=None, outprint=True):
+    """
+    Read marginals with instance naming
+    """
+    name = f"{prefix}"+ str(inst)
+    
+    margs = []
+    path = Path(fold)
+    if outprint:
+        print(path.resolve().as_posix())
+
+    load_range = _make_range_confs(range_confs)
+
+    if outprint: print(load_range)
+    for i in load_range:
+        nam_f = name + f"_{i}_{name_pars}.json"
+        d = load_json(path / nam_f)
+        margs.append(d)
+    return margs    
