@@ -41,6 +41,7 @@ def add_arg_parser(parser):
     parser.add_argument("--nthreads", type=int, default=-1, dest="num_threads",
         help="Number of threads to run sib with")
     parser.add_argument("--sib_tol", type=float, default=1e-3, help="Sib tolerance in convergence")
+    parser.add_argument("--prior_test", action="store_true", help="Put prior as fake tests on unobserved nodes")
 
     return parser
 
@@ -123,6 +124,14 @@ if __name__ == "__main__":
             print(obs_list)
             obs_init_list =[(i,-1,t) for t in range(t_limit+1) for i in range(N) ]
             obs_init_list.extend(obs_list)
+            
+            nodes_obs = set(obs_df["node"])
+            unobserved = set(range(N)).difference(nodes_obs)
+
+            if args.prior_test:
+                print(f" {len(unobserved)} unobserved nodes")
+                for node in unobserved:
+                    obs_init_list.append((node, sib.Test(ps=1, pi=0.5, pr=1), t_limit))
             #print(obs_list)
             #print(json.dumps(data_["observ_dict"][instance_num],), )
             obs_df.to_csv(name_file_instance+"_obs_sparse.csv",index=False)
