@@ -139,7 +139,7 @@ if __name__ == "__main__":
     t_limit = INSTANCE.t_limit
     version_scripts = get_versions()
     
-    for instance_num in range(args.start_conf, args.num_conf):
+    for instance_num in range(args.start_conf, args.start_conf+args.num_conf):
         last_obs = data_["test"][instance_num][1]
         real_src = data_["test"][instance_num][0]
         print(f"Instance {instance_num}, Real source:",np.where(real_src)[0][0])

@@ -68,7 +68,7 @@ def run_epi_(args):
     except:
         print("Cannot find EPI version")
     
-    mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI)
+    mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI, p_autoinf=1e-12)
     for inst_i in range(start_i, start_i+args.num_conf):
         print(f"Instance {inst_i}")
         real_src = data_["test"][inst_i][0]
