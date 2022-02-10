@@ -104,6 +104,7 @@ if __name__ == "__main__":
     mus=[]
     convergence_all=[]
     for instance_num in range(args.start_conf, args.start_conf+args.num_conf):
+        print(f"Instance {instance_num}")
         last_obs = data_["test"][instance_num][1]
         real_src = data_["test"][instance_num][0]
         print("Real source:",np.where(real_src)[0])
