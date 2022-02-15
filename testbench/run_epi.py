@@ -169,6 +169,9 @@ def run_epi_(args):
 
         np.savez_compressed(name_file_instance+"_margs.npz", marginals=margins)
 
+        np.savez_compressed(name_file_instance+"_eps_traces.npz", 
+            **({f"eps_{e}": c for e,c in mRunner.error_trace.items()}) )
+
         print("Saved data")
 
     
