@@ -31,6 +31,10 @@ def create_parser():
     parser.add_argument('--mu', type=float, default=1e-10, dest="mu", help="mu")
     parser.add_argument('--init_name_file', type=str, default="", dest="str_name_file", help="str_name_file")
     parser.add_argument('--path_dir', type=str, default="not_setted", dest="path_dir", help="path_dir")
+    
+    parser.add_argument("--lambda_rand", type=str, default="", dest="rand_lambda",
+        help="Sample lambdas from this distribution, values: exponential, pareto, ecc")
+
     parser.add_argument('--num_conf', type=int, default=10, dest="num_conf", help="num_conf with observations")
     parser.add_argument("--n_sources", type=int, default=1, help="Number of sources (seeds) for the epidemic cascades")
     parser.add_argument('--start_conf', type=int, default=0, dest="start_conf", help="starting number of the range of configurations to be computed")

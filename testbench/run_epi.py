@@ -176,6 +176,7 @@ def run_epi_(args):
 
     
 if __name__ == "__main__":
+    import gc
 
     parser = create_parser()
     parser = add_arguments(parser)
@@ -197,3 +198,4 @@ if __name__ == "__main__":
             args.seed = s
             print(f"SEED: {s}")
             run_epi_(args)
+            gc.collect()
