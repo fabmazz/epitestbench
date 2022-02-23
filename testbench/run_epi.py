@@ -31,6 +31,7 @@ def add_arguments(parser):
 
     parser.add_argument("--seeds_range", nargs="*", type=int, help="Seeds to run sequentially (different instances, start to end)")
 
+    parser.add_argument("--damps", nargs="*", type=float, default=[0., 0.3,0.6], help="Sequence of damping to use")
     return parser
 
 
@@ -111,7 +112,8 @@ def run_epi_(args):
         t0 = time.time()
         print("nodes check:",mRunner.nodes())
         epsi = 1000*args.eps_conv
-        damping = [(l, v) for l,v in zip([args.max_iter]*3,[0., 0.3, 0.6])]
+        damping = [(l, v) for l,v in zip([args.max_iter]*3,args.damps)]
+        print(damping)
         for maxit, damp in damping:
             try:
                 epsi = mRunner.iterate(eps=args.eps_conv,
