@@ -22,7 +22,7 @@ from pyepi import epi_runner as epi_run
 
 def add_arguments(parser):
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
-    parser.add_argument("--max_iter", type=int, default=100, help="maximum number of iterations")
+    parser.add_argument("--max_iter", type=int, default=800, help="maximum number of iterations")
     #parser.add_argument("--max_iter", type=int, default=100, help="maximum number of iterations")
 
     parser.add_argument("--eps_conv", type=float, default=1e-6, help="ɛ to convergence")
@@ -31,7 +31,7 @@ def add_arguments(parser):
 
     parser.add_argument("--seeds_range", nargs="*", type=int, help="Seeds to run sequentially (different instances, start to end)")
 
-    parser.add_argument("--damps", nargs="*", type=float, default=[0., 0.3,0.6], help="Sequence of damping to use")
+    parser.add_argument("--damps", nargs="*", type=float, default=[0.3,0.6], help="Sequence of damping to use")
     return parser
 
 
@@ -112,14 +112,14 @@ def run_epi_(args):
         t0 = time.time()
         print("nodes check:",mRunner.nodes())
         epsi = 1000*args.eps_conv
-        damping = [(l, v) for l,v in zip([args.max_iter]*3,args.damps)]
+        damping = [(l, v) for l,v in zip([args.max_iter]*len(args.damps),args.damps)]
         print(damping)
         for maxit, damp in damping:
             try:
                 epsi = mRunner.iterate(eps=args.eps_conv,
                         maxiter=maxit, damp=damp, 
                         verbose=args.verbose,
-                        shuffle_every=30)
+                        shuffle_every=1)
             except RuntimeError as e:
                 print(e)
                 print("ERROR CONVERGING, trying more shuffling and damping")
@@ -127,13 +127,13 @@ def run_epi_(args):
                     epsi = mRunner.iterate(eps=args.eps_conv,
                         maxiter=maxit, damp=damp+0.1, 
                         verbose=args.verbose,
-                        shuffle_every=15)
+                        shuffle_every=1)
                 except RuntimeError:
                     try:
                         epsi = mRunner.iterate(eps=args.eps_conv,
                             maxiter=maxit, damp=min(damp+0.5,0.99), 
                             verbose=args.verbose,
-                            shuffle_every=15)
+                            shuffle_every=1)
                     except RuntimeError as ee:
                         def myf(dat, t):
                             df = pd.DataFrame(epi_run.EPI.get_contacts_vector(dat), columns=["i","j","lam"])

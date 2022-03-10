@@ -40,10 +40,13 @@ def read_margs_inst(fold, inst, prefix="", name_npz="margs", range_confs=(0,1),
     for i in load_range:
         nam_f = name + f"_{i}_{name_npz}.npz"
         d = np.load(path / nam_f)
-        try:
-            margs.append(d[name_array])
-        except KeyError as e:
-            raise ValueError(f"KEY '{name_array}' not found, keys are: "+str(tuple(d.keys())) ) from e
+        if name_array is None:
+            margs.append({k: d[k] for k in d.keys()})
+        else:
+            try:
+                margs.append(d[name_array])
+            except KeyError as e:
+                raise ValueError(f"KEY '{name_array}' not found, keys are: "+str(tuple(d.keys())) ) from e
 
         d.close()
     return margs
