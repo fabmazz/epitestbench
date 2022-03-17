@@ -17,8 +17,12 @@ sys.path.append(str(p)+"/")
 #from julia.api import Julia
 #jl = Julia(compiled_modules=False)
 from lib.make_parser import create_parser, create_data, get_versions
-
-from pyepi import epi_runner as epi_run
+try:
+    from pyepi import epi_runner as epi_run
+except ImportError as e:
+    print("Cannot find pyepi, have you run `pip install -e .` ?")
+    print("Path: ",sys.path)
+    raise e
 
 def add_arguments(parser):
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
@@ -32,6 +36,8 @@ def add_arguments(parser):
     parser.add_argument("--seeds_range", nargs="*", type=int, help="Seeds to run sequentially (different instances, start to end)")
 
     parser.add_argument("--damps", nargs="*", type=float, default=[0.3,0.6], help="Sequence of damping to use")
+
+    parser.add_argument("--beta_conv", type=float, default=-1., help="Fraction or number of steps to do annealing observations")
     return parser
 
 
@@ -69,7 +75,19 @@ def run_epi_(args):
     except:
         print("Cannot find EPI version")
     
-    mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI, p_autoinf=1e-12)
+    #print(cts_EPI[0])
+    #print(contacts[-200:])
+    if args.beta_conv <= 0 :
+        betas_conv = [1.,1.,1.]
+    else:
+        if args.beta_conv <= 1:
+            nbetas = int(args.max_iter*args.beta_conv)
+        else:
+            nbetas = int(args.beta_conv)
+        print(f"Have {nbetas} beta")
+        betas_conv = list(np.linspace(0,1,nbetas))
+    
+    mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI, p_obs_error=1e-6)
     for inst_i in range(start_i, start_i+args.num_conf):
         print(f"Instance {inst_i}")
         real_src = data_["test"][inst_i][0]
@@ -114,12 +132,14 @@ def run_epi_(args):
         epsi = 1000*args.eps_conv
         damping = [(l, v) for l,v in zip([args.max_iter]*len(args.damps),args.damps)]
         print(damping)
+        betas_do = True
         for maxit, damp in damping:
             try:
                 epsi = mRunner.iterate(eps=args.eps_conv,
                         maxiter=maxit, damp=damp, 
                         verbose=args.verbose,
-                        shuffle_every=1)
+                        shuffle_every=1,
+                        betas= betas_conv if betas_do else [1.,1.,1.,1.])
             except RuntimeError as e:
                 print(e)
                 print("ERROR CONVERGING, trying more shuffling and damping")
@@ -148,6 +168,7 @@ def run_epi_(args):
             #all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
             if epsi > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")
+                if betas_do: betas_do=False
             else:
                 break
                 """epsi = mRunner.iterate(eps=args.eps_conv,

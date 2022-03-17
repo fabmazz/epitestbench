@@ -35,6 +35,9 @@ def create_parser():
     parser.add_argument("--lambda_rand", type=str, default="", dest="rand_lambda",
         help="Sample lambdas from this distribution, values: exponential, pareto, ecc")
 
+    parser.add_argument("--p_gen", type=float, default=None,
+        help="prob used in the random graph generation (gnp, WS)")
+
     parser.add_argument('--num_conf', type=int, default=10, dest="num_conf", help="num_conf with observations")
     parser.add_argument("--n_sources", type=int, default=1, help="Number of sources (seeds) for the epidemic cascades")
     parser.add_argument('--start_conf', type=int, default=0, dest="start_conf", help="starting number of the range of configurations to be computed")
