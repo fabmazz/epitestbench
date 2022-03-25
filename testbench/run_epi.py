@@ -1,4 +1,4 @@
-from julia import Main
+#from julia import Main
 import json, sys, os
 import numpy as np
 import pandas as pd
@@ -166,7 +166,7 @@ def run_epi_(args):
                         print("Saved at ", name_file_instance+"_contacts.csv")
                         raise ee
             #all_args["convergence"].append({"damp":0., "eps_final":epsi,"maxiter":args.max_iter})
-            if epsi > args.eps_conv:
+            if np.max(epsi) > args.eps_conv:
                 print(f"Not converged yet, eps: {epsi}")
                 if betas_do: betas_do=False
             else:
@@ -177,12 +177,26 @@ def run_epi_(args):
                         shuffle_every=30)
                 #all_args["convergence"].append({"damp":0.3, "eps_final":epsi,"maxiter":args.max_iter})
                 """
-        if epsi > args.eps_conv:
-            print(f"Not converged by the end. eps: {epsi}")           
 
+        out_margs = dict()
+        if np.max(epsi) > args.eps_conv:
+            print(f"Not converged by the end. eps: {epsi}")
+
+            res = mRunner.get_margs_error(
+                eps=args.eps_conv, maxiter=500, damp=0.8,verbose=args.verbose,
+                shuffle_every=1
+            )
+            margs_max, margs_min, margs_avg, margs_var = res[:4]
+            out_margs["max"] = margs_max
+            out_margs["min"] = margs_min
+
+            out_margs["mean"] = margs_avg
+            out_margs["var"] = margs_var
+        
         margins = np.stack([n.marg for n in mRunner.nodes()])
         t_taken = time.time() -t0
         print("Took {} sec".format(t_taken))
+        out_margs["marginals"] = margins
 
         
         all_args["time_convergence"] = t_taken
@@ -190,7 +204,7 @@ def run_epi_(args):
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
 
-        np.savez_compressed(name_file_instance+"_margs.npz", marginals=margins)
+        np.savez_compressed(name_file_instance+"_margs.npz", **out_margs)
 
         np.savez_compressed(name_file_instance+"_eps_traces.npz", 
             **({f"eps_{round(e,2)}": c for e,c in mRunner.error_trace.items()}) )
