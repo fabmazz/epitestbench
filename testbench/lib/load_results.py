@@ -22,10 +22,12 @@ def _make_range_confs(in_range):
         load_range = in_range
     return load_range
 
+
 def read_margs_inst(fold, inst, prefix="", name_npz="margs", range_confs=(0,1),
-    post_inst="", name_array="marginals", outprint=True):
+    post_inst="", name_array="marginals", outprint=True, extract_f=None):
     """
     Read marginals with instance naming
+    extract_f: custom function to extract the wanted array from the file
     """
     name = f"{prefix}"+ str(inst)+ post_inst
     
@@ -40,7 +42,9 @@ def read_margs_inst(fold, inst, prefix="", name_npz="margs", range_confs=(0,1),
     for i in load_range:
         nam_f = name + f"_{i}_{name_npz}.npz"
         d = np.load(path / nam_f)
-        if name_array is None:
+        if extract_f is not None:
+            margs.append(extract_f(d))
+        elif name_array is None:
             margs.append({k: d[k] for k in d.keys()})
         else:
             try:

@@ -8,6 +8,8 @@ from epigen.epidemy_gen import epidemy_gen_epinstance
 
 from .version import git_version
 
+from .obs_extra import gen_obs_single_t
+
 
 
 def create_parser():
@@ -70,7 +72,10 @@ def create_parser():
             help="Save data of generated epidemies")
     ## use the new generator
     parser.add_argument("--sp_obs_new", action="store_true", 
-            help="Use the new generator for observations")
+            help="Use the new generator for daily observations")
+
+    parser.add_argument("--sp_obs_single", action="store_true", 
+        help="Generate one obs for each node that is observed. Uses only '--pr_sympt' as pr. of obs for a node")
     
 
 
@@ -138,7 +143,19 @@ def create_data(args):
         else:
             p_test_delay = np.array(p_test_delay)/sum(p_test_delay)
         ## get full epidemies
-        if args.sp_obs_new:
+        if args.sp_obs_single:
+            if args.sparse_obs_last:
+                t_obs = t_limit
+            else:
+                t_obs = None
+
+            g = observ_gen.gen_obs_custom(data_, mInstance, gen_obs_single_t, seed=seed,
+                p_choose=pr_sympt, t_obs=t_obs)
+            obs_df = [pd.DataFrame(x, columns=["node","obs_st","time"]) for x in g]
+
+            obs_json = None            
+
+        elif args.sp_obs_new:
             if args.sparse_obs_last:
                 nrnd_tests = 0
                 t_obs_lim = t_limit
