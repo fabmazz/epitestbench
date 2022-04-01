@@ -154,7 +154,7 @@ if __name__ == "__main__":
             obser = obs_df.copy()[["node","obs_st","time"]]
 
             obs_df.to_csv(name_file_instance+"_obs_sparse.csv",index=False)
-        
+            print(f"Have {len(obser)} observations")
         all_args = vars(args)
         all_args["versions"] = version_scripts
         with open(name_file_instance+"_args.json","w") as f:

@@ -151,7 +151,7 @@ def create_data(args):
 
             g = observ_gen.gen_obs_custom(data_, mInstance, gen_obs_single_t, seed=seed,
                 p_choose=pr_sympt, t_obs=t_obs)
-            obs_df = [pd.DataFrame(x, columns=["node","obs_st","time"]) for x in g]
+            obs_df = [pd.DataFrame(x, columns=["node","obs_st","time"]).sort_values("time") for x in g]
 
             obs_json = None            
 
@@ -186,6 +186,9 @@ def create_data(args):
         for df in obs_df:
             if "obs" in df:
                 df["obs_st"] = df["obs"]
+        if len(obs_df) < 20:
+            for i,o in enumerate(obs_df):
+                print(f"Epi {i}: {len(o)} observ")
         data_["observ_df"] = obs_df
         if obs_json is not None:
             data_["observ_dict"] = obs_json
@@ -197,7 +200,7 @@ def create_data(args):
     if not path_save.exists():
         raise ValueError("Save folder doesn't exist")
 
-    
+    print("INSTANCE: \n"+repr(mInstance))
     ## ************ CREATE NAME FILE  ************
 
     name_file = get_name_file_instance(args, args.str_name_file, mInstance)
