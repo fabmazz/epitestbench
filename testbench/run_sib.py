@@ -4,6 +4,7 @@
 import sys
 import os
 import json
+import time
 import argparse
 from pathlib import Path
 
@@ -103,7 +104,9 @@ if __name__ == "__main__":
     lambdas=[]
     mus=[]
     convergence_all=[]
-    for instance_num in range(args.start_conf, args.start_conf+args.num_conf):
+    end_conf_last = args.start_conf+args.num_conf
+    range_confs = range(args.start_conf, args.start_conf+args.num_conf)
+    for instance_num in range_confs:
         print(f"Instance {instance_num}")
         last_obs = data_["test"][instance_num][1]
         real_src = data_["test"][instance_num][0]
@@ -160,6 +163,7 @@ if __name__ == "__main__":
                             contacts = contacts, 
                             observations = obs_list)
         callback = make_callback(conver, tol)
+        tstart = time.time()
         for ii in range(args.iter_learn):
             sib.iterate(f, maxit=args.maxit, tol=tol,
                         callback=callback, learn=learn)
@@ -193,10 +197,13 @@ if __name__ == "__main__":
                 lambdas.append(float(params_sib.prob_i.theta[0]))
                 mus.append(float(params_sib.prob_r.mu))
             '''
+            
+        tend = time.time()
         all_args = vars(args)
         #all_args["sib_version"] = sib.version()
         all_args["versions"] = VERSIONS
         all_args["sib_convergence"] = conver[0]
+        all_args["converge_time"] = round(tend-tstart, 3)
         with open(name_file_instance+"_args.json","w") as mfile:
             json.dump(all_args,mfile, indent=1)
         
@@ -216,4 +223,4 @@ if __name__ == "__main__":
         np.savez_compressed(name_file_instance+"_sib_margs.npz", marginals=M)
         #pd.DataFrame(data={"lambda":lambdas, "mu":mus}).to_csv(name_file_instance+"_params.gz")
 
-    print("\nSib convergence: \n", pd.Series(convergence_all, index=range(args.start_conf, args.num_conf)))
+    print("\nSib convergence: \n", pd.Series(convergence_all, index=range_confs))

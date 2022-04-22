@@ -1,10 +1,11 @@
-#from julia import Main
+from julia import Main
 import json, sys, os
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import time
 
+from epigen.observ_gen import calc_epidemies
 '''
 def module_path():
     #encoding = sys.getfilesystemencoding()
@@ -38,8 +39,17 @@ def add_arguments(parser):
     parser.add_argument("--damps", nargs="*", type=float, default=[0.3,0.6], help="Sequence of damping to use")
 
     parser.add_argument("--beta_conv", type=float, default=-1., help="Fraction or number of steps to do annealing observations")
+
+    #parser.add_argument("--t_lim_cut", type=int, default=-1, help="Final time to cut the epidemic (resizing)")
     return parser
 
+def round_f(k,n):
+    try:
+        _ = round(k,n)
+        ## it's numeric
+        return _
+    except TypeError:
+        return k
 
 def run_epi_(args):
 
@@ -207,7 +217,7 @@ def run_epi_(args):
         np.savez_compressed(name_file_instance+"_margs.npz", **out_margs)
 
         np.savez_compressed(name_file_instance+"_eps_traces.npz", 
-            **({f"eps_{round(e,2)}": c for e,c in mRunner.error_trace.items()}) )
+            **({f"eps_{round_f(e,2)}": c for e,c in mRunner.error_trace.items()}) )
 
         print("Saved data")
 
