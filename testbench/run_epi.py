@@ -5,6 +5,8 @@ import pandas as pd
 from pathlib import Path
 import time
 
+from networkx.algorithms import is_connected
+
 from epigen.observ_gen import calc_epidemies
 '''
 def module_path():
@@ -28,6 +30,8 @@ except ImportError as e:
 def add_arguments(parser):
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
     parser.add_argument("--max_iter", type=int, default=800, help="maximum number of iterations")
+    parser.add_argument("-mi","--min_iter", type=int, default=100, help="minimum number of iterations per run")
+
     #parser.add_argument("--max_iter", type=int, default=100, help="maximum number of iterations")
 
     parser.add_argument("--eps_conv", type=float, default=1e-6, help="ɛ to convergence")
@@ -55,7 +59,7 @@ def run_epi_(args):
 
     print(args)
 
-    data_, name_file, epInstance = create_data(args)
+    data_epi, name_file, epInstance = create_data(args)
 
     if args.p_source <= 0:
         p_src = 1/epInstance.n
@@ -64,11 +68,17 @@ def run_epi_(args):
 
     prob_sources_EPI =  np.full(epInstance.n, p_src)
     ## parse contacts
-    contacts_py = data_["contacts"]
+    contacts_py = data_epi["contacts"]
     contacts = np.vstack((contacts_py[:,1]+1, contacts_py[:,2]+1, contacts_py[:,0], contacts_py[:,3])).T
     ### check
     assert np.max(contacts[:,0:2]) <= epInstance.n
     assert np.max(contacts[:,2]) <= epInstance.t_limit
+
+    ##check for static graphs
+    if data_epi["G"] is not None:
+        v=is_connected(data_epi["G"])
+        print(f"Graph connected: {v}")
+        assert v
 
     #print("Min t", contacts[:,2].min())
 
@@ -100,7 +110,7 @@ def run_epi_(args):
     mRunner = epi_run.Runner(epInstance, cts_EPI, prob_sources_EPI, p_obs_error=1e-6)
     for inst_i in range(start_i, start_i+args.num_conf):
         print(f"Instance {inst_i}")
-        real_src = data_["test"][inst_i][0]
+        real_src = data_epi["test"][inst_i][0]
         print("Real source:",np.where(real_src)[0])
 
         name_file_instance = name_file + "_" + str(inst_i)
@@ -110,12 +120,12 @@ def run_epi_(args):
 
         if not args.sparse_obs:
             obs_list = []
-            last_obs = data_["test"][inst_i][1]
+            last_obs = data_epi["test"][inst_i][1]
             for i, s in enumerate(last_obs):
                 obs_list.append([i,s,t_limit])
             
         else:
-            obs_df = data_["observ_df"][inst_i]
+            obs_df = data_epi["observ_df"][inst_i]
             obs_list = []
             obs_v = obs_df[["node","obs_st","time"]].to_numpy()
             obs_list = obs_v.tolist()
@@ -142,11 +152,13 @@ def run_epi_(args):
         epsi = 1000*args.eps_conv
         damping = [(l, v) for l,v in zip([args.max_iter]*len(args.damps),args.damps)]
         print(damping)
+        min_iter = args.min_iter
         betas_do = True
+
         for maxit, damp in damping:
             try:
                 epsi = mRunner.iterate(eps=args.eps_conv,
-                        maxiter=maxit, damp=damp, 
+                        maxiter=maxit, damp=damp, miniter=min_iter,
                         verbose=args.verbose,
                         shuffle_every=1,
                         betas= betas_conv if betas_do else [1.,1.,1.,1.])
@@ -155,13 +167,13 @@ def run_epi_(args):
                 print("ERROR CONVERGING, trying more shuffling and damping")
                 try:
                     epsi = mRunner.iterate(eps=args.eps_conv,
-                        maxiter=maxit, damp=damp+0.1, 
+                        maxiter=maxit, miniter=min_iter, damp=damp+0.1, 
                         verbose=args.verbose,
                         shuffle_every=1)
                 except RuntimeError:
                     try:
                         epsi = mRunner.iterate(eps=args.eps_conv,
-                            maxiter=maxit, damp=min(damp+0.5,0.99), 
+                            maxiter=maxit,miniter=min_iter, damp=min(damp+0.5,0.99), 
                             verbose=args.verbose,
                             shuffle_every=1)
                     except RuntimeError as ee:
