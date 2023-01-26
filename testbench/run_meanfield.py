@@ -72,6 +72,7 @@ if __name__ == "__main__":
     t_limit = INSTANCE.t_limit
     version_scripts = get_versions()
 
+    rng_MF = np.random.RandomState(np.random.PCG64(10))
     loglambs = [smf.contacts_to_csr(
             N,contacts_df[contacts_df.t == t].to_records(index=False),lamb=1.)
          for t in range(t_limit+1)]
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         obs_mf = smf.prepare_obs(obs_df.to_records(index=False))
 
         pinf = smf.ranking_backtrack(INSTANCE.t_limit,loglambs,obs_mf, delta=args.delta, tau=args.tau, 
-            mu=INSTANCE.mu)
+            mu=INSTANCE.mu, rng=rng_MF)
         
         res = np.array([(i,x)for i,x in enumerate(pinf)], dtype=[("idx","i8"),("risk","f8")])
         print(f"Num I: {sum(pinf)}\n Saving")
