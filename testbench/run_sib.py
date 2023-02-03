@@ -22,9 +22,10 @@ except ImportError:
     print("sib is not installed. Install from https://github.com/sibyl-team/sib")
     sys.exit(1)
 
-def make_callback(converged, eps_conv):
+def make_callback(converged, eps_conv, damp):
+    dstring = f"damp {damp}"
     def callback_print(t,err,f):
-        print(f"single_iter: {t:6}, err: {err:.5e} ", end="\r")
+        print(dstring+f" : {t:6}, err: {err:.5e} ", end="\r")
         #-- iter_params: {ii} -- lambda: {params_sib.prob_i.theta[0]:.3} -- mu: {float(params_sib.prob_r.mu):.3}", end="\r")
         if err < eps_conv:
             converged[0] = True
@@ -162,21 +163,22 @@ if __name__ == "__main__":
         f = sib.FactorGraph(params=params_sib, 
                             contacts = contacts, 
                             observations = obs_list)
-        callback = make_callback(conver, tol)
+        
         tstart = time.time()
         for ii in range(args.iter_learn):
+            
             sib.iterate(f, maxit=args.maxit, tol=tol,
-                        callback=callback, learn=learn)
+                        callback=make_callback(conver, tol,0.), learn=learn)
             #print(f"\nConverged: {conver[0]}")
             print("")
             sib.iterate(f, maxit=args.maxit, damping=0.5,
                         tol=tol,
-                        callback=callback, learn=learn)
+                        callback=make_callback(conver, tol,0.5), learn=learn)
             #print(f"\nConverged: {conver[0]}")
             print("")
             sib.iterate(f, maxit=args.maxit, damping=0.95,
                         tol=tol,
-                        callback=callback, learn=learn)
+                        callback=make_callback(conver, tol,0.95), learn=learn)
             print(f"\nConverged: {conver[0]}")
             '''
             if args.lr_param > 0:
