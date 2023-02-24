@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import time
+from copy import deepcopy
 
 from networkx.algorithms import is_connected
 
@@ -55,9 +56,12 @@ def round_f(k,n):
     except TypeError:
         return k
 
-def run_epi_(args):
+def run_epi_(args_all, seed):
 
-    print(args)
+    #print(args)
+    args = deepcopy(args_all)
+    if seed is not None:
+        args.seed = seed
 
     data_epi, name_file, epInstance = create_data(args)
 
@@ -247,14 +251,14 @@ if __name__ == "__main__":
     seeds_range = args.seeds_range
     if seeds_range is None or len(seeds_range) == 0:
         ## proceed as normal
-        run_epi_(args)
+        run_epi_(args, None)
 
     elif len(seeds_range) < 2 or len(seeds_range) > 2:
         raise ValueError("Insert start and stop as `seeds_range`")
     else:
         for s in range(*seeds_range):
             ### run over different seeds
-            args.seed = s
+            #args.seed = s
             print(f"SEED: {s}")
-            run_epi_(args)
+            run_epi_(args, s)
             gc.collect()
