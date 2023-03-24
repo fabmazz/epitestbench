@@ -8,7 +8,7 @@ from epigen.epidemy_gen import epidemy_gen_epinstance
 
 from .version import git_version
 
-from .obs_extra import gen_obs_single_t
+from .obs_extra import gen_obs_single_t, gen_obs_fixed_inf, sort_obs
 
 
 
@@ -73,6 +73,8 @@ def create_parser():
     ## use the new generator
     parser.add_argument("--sp_obs_new", action="store_true", 
             help="Use the new generator for daily observations")
+    parser.add_argument("--sp_obs_fix_i", action="store_true", 
+        help="Generate observ with fixed number of Infected observed.\nGive `pr_sympt` as the fraction of observed infected, and `sparse_rnd_tests` as the total number of daily tests")
 
     parser.add_argument("--sp_obs_single", action="store_true", 
         help="Generate one obs for each node that is observed. Uses only '--pr_sympt' as pr. of obs for a node")
@@ -169,7 +171,15 @@ def create_data(args):
             )
             obs_df = [pd.DataFrame(x, columns=["node","obs_st","time"]) for x in g]
             obs_json = None
-            
+        elif args.sp_obs_fix_i:
+            ### fixed number of infected observed
+            r = (gen_obs_fixed_inf(times,frac_inf=pr_sympt,
+                n_obs_day=nrnd_tests, T=mInstance.t_limit,
+                rng=np.random.RandomState(np.random.PCG64(mInstance.seed))
+                ) for times in data_["epidemy"])
+
+            obs_df = [pd.DataFrame(sort_obs(x), columns=["node","obs_st","time"]) for x in r]
+            obs_json = None
         else:
             #old code
             if args.sparse_obs_last:
