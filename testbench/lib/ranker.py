@@ -6,16 +6,26 @@ Dummy = namedtuple("dummy", ["info"])
 
 def prepare_contacts(conts):
     t_limit = int(conts[:,0].max())+1
-    conts_df = pd.DataFrame(conts[:,:3].astype(int), columns=["t","i","j"], dtype=int)
-    conts_df["lam"]=conts[:,3]
+    conts_df = pd.DataFrame(
+        {"t": conts[:,0].astype(int),
+        "i": conts[:,1].astype(np.int_),
+        "j": conts[:,2].astype(np.int_),
+        "lam": conts[:,3]
+        })
+        #conts[:,:3].astype(int), columns=["t","i","j"], dtype=int)
+    #conts_df["lam"]=conts[:,3]
     ## add fake contact for the last time
+    #print({k: conts_df[k].dtype for k in conts_df})
     r1 = conts_df.iloc[1].to_dict()
-    r1["t"] = t_limit
-    r1["lam"] = 0.
-    conts_all = conts_df.append(r1,ignore_index=True)
+    r1=dict(t=[t_limit],i=[int(r1["i"])], j=[int(r1["j"])], lam=[0.]) #t_limit
+    #r1 = {k: np.array(r1[k]) for k in r1}
+    #r1["lam"] = 0.
+    #print(r1)
+    conts_all = pd.concat([conts_df, pd.DataFrame(r1)],ignore_index=True)
 
     conts_all = conts_all[["i","j","t", "lam"]]
-    return conts_all.convert_dtypes(convert_integer=True)
+    print({k: conts_all[k].dtype for k in conts_all})
+    return conts_all #conts_all.convert_dtypes(convert_integer=True)
 
 def launch_ranker(ranker, epinstance,contacts_df, observations):
     data={}
