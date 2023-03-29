@@ -121,8 +121,9 @@ def read_params_inst(fold, inst, prefix="", name_pars="args", range_confs=(0,1),
         margs.append(d)
     return margs
 
-def give_name_save(inst, extra=None):
-    base = f"{inst.type_graph}_N_{inst.n}_d_{inst.d}_tlim_{inst.t_limit}_lam_{inst.lambda_}_mu_{inst.mu}_pe_{inst.p_edge}"
+def give_name_save(inst, type_g=True,extra=None):
+    base =f"{inst.type_graph}_" if type_g else ""
+    base += f"N_{inst.n}_d_{inst.d}_tlim_{inst.t_limit}_lam_{inst.lambda_}_mu_{inst.mu}_pe_{inst.p_edge}"
     if extra is not None:
         base +="_"+extra
     return base
