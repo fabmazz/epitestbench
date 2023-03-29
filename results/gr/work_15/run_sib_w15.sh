@@ -13,7 +13,7 @@ seed=7
 scale=1.8
 gamma=2e-3
 small_lambda_limit=0
-path_contacts="$(pwd)/results/work_15_contacts.npz"
+path_contacts="testbench/data/work_15_contacts.npz"
 #path_contacts="testbench/data/cts"
 
 min_ninf=1
@@ -48,14 +48,14 @@ EXTRA_FLAGS=" --init_name_file $init_name --path_dir $path_dir" # --sparse_obs_l
 SPARSE_OBS="--sparse_obs --sparse_rnd_tests $n_test_rnd --pr_sympt $pr_sympt --delay_test_p $delay_test_p"
 EXTRA_OBS="--sp_obs_new --sp_obs_min_t $tobs_min " #--sp_obs_min_tinf 6"
 
-SIB_PARS="--p_source $p_source --maxit 1000 --p_sus 0.5  --sib_tol 1e-6  --nthreads 24"
+SIB_PARS="--p_source $p_source --maxit 1000 --p_sus 0.5  --sib_tol 1e-6  --nthreads 40"
 
 ## GO BACK TO ROOT FOLDER
 cd ../../..
 
 
 num_conf=20
-st_conf=40
+st_conf=0
 
 mkdir -p $path_dir
 for seed in $seed #$(seq 0 100)
