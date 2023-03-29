@@ -119,4 +119,10 @@ def read_params_inst(fold, inst, prefix="", name_pars="args", range_confs=(0,1),
         nam_f = name + f"_{i}_{name_pars}.json"
         d = load_json(path / nam_f)
         margs.append(d)
-    return margs    
+    return margs
+
+def give_name_save(inst, extra=None):
+    base = f"{inst.type_graph}_N_{inst.n}_d_{inst.d}_tlim_{inst.t_limit}_lam_{inst.lambda_}_mu_{inst.mu}_pe_{inst.p_edge}"
+    if extra is not None:
+        base +="_"+extra
+    return base
