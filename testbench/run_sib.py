@@ -59,8 +59,7 @@ if __name__ == "__main__":
     p_source = args.p_source
     p_sus = args.p_sus
 
-    if p_source < 0:
-        p_source = 1/args.N
+    
 
     prob_seed = p_source / (2 - p_source)
     p_sus = p_sus * (1-prob_seed)
@@ -78,6 +77,9 @@ if __name__ == "__main__":
     
 
 ## ************ RUN INFERENCE ALGORITHMS ************
+
+    if p_source < 0:
+        p_source = INSTANCE.n_src/args.N
 
     if args.num_threads > 0:
         ## set number of cores to use with sib
