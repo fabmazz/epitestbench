@@ -66,8 +66,8 @@ def create_parser():
     
     parser.add_argument("--pr_sympt", type=float, default=0., dest="sp_p_inf_symptoms", 
         help="probability for each infected individual to be symptomatic and get tested")
-    parser.add_argument("--delay_test_p", type=float, nargs="*", dest="sp_p_test_delay", 
-        help="List of probabilities for the time delay in testing symptomatic individuals, starting from 0. Enter one probability after the other, they will get normalized")
+    parser.add_argument("--delay_test_p", nargs="*", dest="sp_p_test_delay", 
+        help="Either: a) name of distribution and parameters, b)list of probabilities for the time delay in testing symptomatic individuals, starting from 0. Enter one probability after the other, they will get normalized")
     parser.add_argument("--save_data_confs", action="store_true", 
             help="Save data of generated epidemies")
     ## use the new generator
@@ -143,7 +143,8 @@ def create_data(args):
         if p_test_delay is None:
             p_test_delay = np.array([1.])
         else:
-            p_test_delay = np.array(p_test_delay)/sum(p_test_delay)
+            p_test_delay = observ_gen.define_delay_probs(p_test_delay) #np.array(p_test_delay)/sum(p_test_delay)
+            print(p_test_delay)
         ## get full epidemies
         if args.sp_obs_single:
             if args.sparse_obs_last:
