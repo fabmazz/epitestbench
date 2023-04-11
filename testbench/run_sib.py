@@ -54,17 +54,7 @@ if __name__ == "__main__":
     print("arguments:")
     print(args)
 
-## ************* set algorithm specific parameters *********** 
-    mu = args.mu
-    p_source = args.p_source
-    p_sus = args.p_sus
 
-    
-
-    prob_seed = p_source / (2 - p_source)
-    p_sus = p_sus * (1-prob_seed)
-
-    print(sib.version())
 ## ************ GENERATE EPIDEMIES ************
 
     data_, name_file, INSTANCE = create_data(args)
@@ -74,13 +64,23 @@ if __name__ == "__main__":
     confs = np.array(data_["test"])
     #np.save(Path(args.path_dir) / (args.str_name_file+f"_{INSTANCE}_confs.npy"), confs)
     print("We have {} epidemies".format(len(confs)))
+## ************* set algorithm specific parameters *********** 
+    mu = args.mu
+    p_source = args.p_source
+    p_sus = args.p_sus
+    if p_source < 0:
+        p_source = INSTANCE.n_src/args.N
+        print("Fix p_source to:", p_source)
     
+    prob_seed = p_source / (2 - p_source)
+    p_sus = p_sus * (1-prob_seed)
+
+
+    print("sib version",sib.version())
 
 ## ************ RUN INFERENCE ALGORITHMS ************
 
-    if p_source < 0:
-        p_source = INSTANCE.n_src/args.N
-
+    
     if args.num_threads > 0:
         ## set number of cores to use with sib
         sib.set_num_threads(args.num_threads)

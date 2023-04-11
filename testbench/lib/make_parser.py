@@ -200,6 +200,10 @@ def create_data(args):
         if len(obs_df) < 20:
             for i,o in enumerate(obs_df):
                 print(f"Epi {i}: {len(o)} observ")
+
+        #obs_df.sort_values(by=["time","node"])
+        for o in obs_df:
+            o.sort_values(by=["time","node"], inplace=True)
         data_["observ_df"] = obs_df
         if obs_json is not None:
             data_["observ_dict"] = obs_json

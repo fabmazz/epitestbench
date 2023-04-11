@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
             
         else:
-            obs_df = data_["observ_df"][instance_num].sort_values("time")
+            obs_df = data_["observ_df"][instance_num].sort_values(["time","node"])
             obser = obs_df.copy()[["node","obs_st","time"]]
 
             obs_df.to_csv(name_file_instance+"_obs_sparse.csv",index=False)
