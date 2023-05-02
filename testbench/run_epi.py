@@ -82,7 +82,7 @@ def run_epi_(args_all, seed):
     if data_epi["G"] is not None:
         v=is_connected(data_epi["G"])
         print(f"Graph connected: {v}")
-        assert v
+        #assert v
 
     #print("Min t", contacts[:,2].min())
 
@@ -129,11 +129,11 @@ def run_epi_(args_all, seed):
                 obs_list.append([i,s,t_limit])
             
         else:
-            obs_df = data_epi["observ_df"][inst_i]
-            obs_list = []
-            obs_v = obs_df[["node","obs_st","time"]].to_numpy()
+            obs_df = data_epi["observ_df"][inst_i][["node","obs_st","time"]]
+            #obs_list = []
+            obs_v = obs_df.to_numpy()
             obs_list = obs_v.tolist()
-            print(obs_list)
+            print(obs_df.to_records(index=False))
 
             obs_df.to_csv(name_file_instance+"_obs_sparse.csv",index=False)
         #obs_list = list(obs_list)
@@ -256,6 +256,7 @@ if __name__ == "__main__":
     elif len(seeds_range) < 2 or len(seeds_range) > 2:
         raise ValueError("Insert start and stop as `seeds_range`")
     else:
+        print(list(range(*seeds_range)))
         for s in range(*seeds_range):
             ### run over different seeds
             #args.seed = s
