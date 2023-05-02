@@ -14,7 +14,7 @@ import pandas as pd
 path_script = Path(sys.argv[0]).parent.absolute()
 sys.path.append(os.fspath(path_script.parent))
 
-from lib.make_parser import create_data, create_parser, get_versions
+from epitestlib.make_parser import create_data, create_parser, get_versions
 
 
 

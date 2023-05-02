@@ -20,7 +20,7 @@ sys.path.append(str(p)+"/")
 '''
 #from julia.api import Julia
 #jl = Julia(compiled_modules=False)
-from lib.make_parser import create_parser, create_data, get_versions
+from epitestlib.make_parser import create_parser, create_data, get_versions
 try:
     from pyepi import epi_runner as epi_run
 except ImportError as e:

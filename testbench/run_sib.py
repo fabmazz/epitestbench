@@ -14,7 +14,7 @@ import pandas as pd
 #path_script = Path(sys.argv[0]).parent.absolute()
 #sys.path.append(os.fspath(path_script.parent/"src"))
 
-from lib.make_parser import create_parser, create_data, get_versions
+from epitestlib.make_parser import create_parser, create_data, get_versions
 
 try:
     import sib

@@ -13,8 +13,8 @@ import pandas as pd
 path_script = Path(sys.argv[0]).parent.absolute()
 sys.path.append(os.fspath(path_script.parent))
 
-from lib.make_parser import create_data, create_parser, get_versions
-from lib.ranker import prepare_contacts
+from epitestlib.make_parser import create_data, create_parser, get_versions
+from epitestlib.ranker import prepare_contacts
 
 try:
     from statmf import meanfield as smf
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     version_scripts = get_versions()
 
     rng_MF = np.random.RandomState(np.random.PCG64(10))
-    loglambs = [smf.contacts_to_csr(
+    contas_csr = [smf.contacts_to_csr(
             N,contacts_df[contacts_df.t == t].to_records(index=False),lamb=1.)
          for t in range(t_limit+1)]
     
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         ## actual code
         obs_mf = smf.prepare_obs(obs_df.to_records(index=False))
 
-        pinf = smf.ranking_backtrack(INSTANCE.t_limit,loglambs,obs_mf, delta=args.delta, tau=args.tau, 
+        pinf = smf.ranking_backtrack(INSTANCE.t_limit,contas_csr,obs_mf, delta=args.delta, tau=args.tau, 
             mu=INSTANCE.mu, rng=rng_MF)
         
         res = np.array([(i,x)for i,x in enumerate(pinf)], dtype=[("idx","i8"),("risk","f8")])
