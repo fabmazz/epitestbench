@@ -31,6 +31,15 @@ def make_callback(converged, eps_conv, damp):
             converged[0] = True
     return callback_print
 
+def marginals_all(fg,T):
+    N = len(fg.nodes)
+    margs = [] #p.empty((T,N,3))
+    for n in fg.nodes:
+        margs.append(n.marginal())
+    margs= np.array(margs)
+    assert margs.shape == (N,T,3)
+    return margs
+
 def add_arg_parser(parser):
     # sib options
     parser.add_argument('--p_source', type=float, default=-1, dest="p_source", help="p_source")
@@ -39,11 +48,12 @@ def add_arg_parser(parser):
     #parser.add_argument('--t_obs', type=int, default=0, dest="t_obs", help="time to compute marginals")
     parser.add_argument('--lr_param', type=float, default=0, dest="lr_param", help="learning rate params")
     parser.add_argument('--iter_learn', type=int, default=1, dest="iter_learn", help="Number of iterations of learning of parameters")
-    parser.add_argument('--lr_gamma',  action="store_true", help="learning rate of infection instead of probability of the propagation model [gamma]")
+    #parser.add_argument('--lr_gamma',  action="store_true", help="learning rate of infection instead of probability of the propagation model [gamma]")
     parser.add_argument("--nthreads", type=int, default=-1, dest="num_threads",
         help="Number of threads to run sib with")
     parser.add_argument("--sib_tol", type=float, default=1e-3, help="Sib tolerance in convergence")
     parser.add_argument("--prior_test", action="store_true", help="Put prior as fake tests on unobserved nodes")
+    parser.add_argument("--avg_m_steps", type=int, default=-1, help="Number of steps to do for average")
 
     return parser
 
@@ -88,7 +98,9 @@ if __name__ == "__main__":
     #+1 t_limit times || +1 obs after contacts || +1 for susceptible
     contacts = data_["contacts"]
     N = int(max(contacts[:, 1]) + 1)
-    if args.lr_param == 0:
+    ## set no learning of parameters
+    LR_PAR = 0
+    if LR_PAR == 0:
         contacts = [(int(i),int(j),int(t),l) for t,i,j,l in contacts] #Setting lambda values in Params
         lambda_ = 1. - 1e-6
         mu = args.mu
@@ -101,7 +113,7 @@ if __name__ == "__main__":
         
     t_limit = INSTANCE.t_limit
     mu_rate = -np.log(1-mu)
-    learn = args.lr_param > 0
+    learn = LR_PAR > 0
     VERSIONS = get_versions()
     VERSIONS["sib"] = sib.version().split("(")[0].strip()
     lambdas=[]
@@ -147,7 +159,7 @@ if __name__ == "__main__":
         obs_list.sort(key=lambda tup: tup[2])
         
 
-        if args.lr_gamma:
+        if  LR_PAR > 10:
             print("***** CHECK if sib is in right branch ******")
             params_sib = sib.Params(prob_r = sib.Exponential(mu=mu_rate), 
                         prob_i = sib.ConstantRate(gamma=lambda_),
@@ -201,7 +213,27 @@ if __name__ == "__main__":
                 lambdas.append(float(params_sib.prob_i.theta[0]))
                 mus.append(float(params_sib.prob_r.mu))
             '''
+        avg_margs = None
+        if conver[0] == False and args.avg_m_steps > 0:
+            maxit = args.avg_m_steps
+            sum_av = None
+            counts = 0
+            print("Get avg marginals")
+            for t in range(maxit):
+                err= f.update(damping=0.8, learn=learn)
+                print(f"Err:  : {t:6}, err: {err:.5e} ", end="\r")
+                if err < tol:
+                    conver[0] = True
+                    sum_av = None
+                    break
+                if sum_av is None:
+                    sum_av =  marginals_all(f, t_limit+1)
+                else:
+                    sum_av += marginals_all(f, t_limit+1)
+                counts += 1
             
+            avg_margs = sum_av/counts
+
         tend = time.time()
         all_args = vars(args)
         #all_args["sib_version"] = sib.version()
@@ -224,7 +256,11 @@ if __name__ == "__main__":
             MM = sib.marginals_t(f,t)
             for n in MM:
                 M[n,t] = MM[n]
-        np.savez_compressed(name_file_instance+"_sib_margs.npz", marginals=M)
+        array_save = {"marginals": M}
+        if avg_margs is not None:
+            print("Save avg margs")
+            array_save["margs_avg"] = avg_margs
+        np.savez_compressed(name_file_instance+"_sib_margs.npz", **array_save)
         #pd.DataFrame(data={"lambda":lambdas, "mu":mus}).to_csv(name_file_instance+"_params.gz")
 
     print("\nSib convergence: \n", pd.Series(convergence_all, index=range_confs))
