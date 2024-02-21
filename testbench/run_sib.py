@@ -213,6 +213,26 @@ if __name__ == "__main__":
                 lambdas.append(float(params_sib.prob_i.theta[0]))
                 mus.append(float(params_sib.prob_r.mu))
             '''
+        avg_margs = None
+        if conver[0] == False and args.avg_m_step > 0:
+            maxit = args.avg_m_step
+            sum_av = None
+            counts = 0
+            print("Save avg marginals")
+            for t in range(maxit):
+                err= f.update(damping=0.8, learn=learn)
+                print(f"Err:  : {t:6}, err: {err:.5e} ", end="\r")
+                if err < tol:
+                    conver[0] = True
+                    sum_av = None
+                    break
+                if sum_av is None:
+                    sum_av =  marginals_all(f, t_limit+1)
+                else:
+                    sum_av += marginals_all(f, t_limit+1)
+                counts += 1
+            
+            avg_margs = sum_av/counts
 
         tend = time.time()
         all_args = vars(args)
@@ -262,6 +282,7 @@ if __name__ == "__main__":
 
         if avg_margs is not None:
             print("Save avg margs")
+        if avg_margs is not None:
             array_save["margs_avg"] = avg_margs
         np.savez_compressed(name_file_instance+"_sib_margs.npz", **array_save)
         #pd.DataFrame(data={"lambda":lambdas, "mu":mus}).to_csv(name_file_instance+"_params.gz")
